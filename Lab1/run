@@ -1,0 +1,16 @@
+#!/bin/bash
+
+rm mtximage.bin
+cp mtximage-old mtximage.bin
+echo comiling ......
+     as86 -o bs.o  bs.s  
+     bcc  -c -ansi main.c
+  
+     echo linking .......
+     ld86 -d bs.o  main.o  /usr/lib/bcc/libc.a
+     echo check a.out size
+     ls -l a.out
+     
+     echo dump a.out to a VIRTUAL FD
+     dd if=a.out of=mtximage.bin bs=1024 count=1 conv=notrunc
+

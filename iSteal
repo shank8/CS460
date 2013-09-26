@@ -1,0 +1,5 @@
+#!/bin/bash
+
+url=http://www.eecs.wsu.edu/~cs460
+
+wget -r -np $url
