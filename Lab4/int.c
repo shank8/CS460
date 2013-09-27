@@ -33,7 +33,8 @@ int kcinth()
        case 4 : r = tswitch();        break;
        case 5 : r = do_wait(b);       break;
        case 6 : r = do_exit(b);       break;
-       
+       case 7 : r = do_fork();        break;
+       case 8 : r = do_exec(b);       break;
        case 90: r =  getc();          break;
        case 91: //color=running->pid+11;
                 r =  putc(b);         break;       

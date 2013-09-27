@@ -68,10 +68,19 @@ int wait()
 } 
 
 int fork(){
+    printf("Forking a child proc...going to kernel\n");
     syscall(7, 0, 0);
+    
 };
 int exec(){
+    char file[64];
 
+    printf("Enter the name of a binary executable file: ");
+    gets(file);
+
+    syscall(8, file, 0);
+
+    printf("Done with exec().. image is now %s\n", file);
 }; 
 
 int exit()

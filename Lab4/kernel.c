@@ -4,6 +4,42 @@
     kfork creates a child process ready to run in Kmode from body()
     In addition, it loads u1 file to the child's Umode segment 
 ************************************************************/
+
+
+int body()
+{
+  char c;
+  PROC * temp;
+
+  printf("Proc %d resumes to body()\n", running->pid);
+  while(1){
+    
+   
+    printList("\nReadyQueue", readyQueue);
+    printList("FreeList", freeList);
+    printList("SleepList", sleepList);
+    temp = procList;
+   /* printf("AllProcs: ");
+    while(temp){
+      printf("[ %d| %d]->", temp->pid, (temp->parent ? temp->parent->pid : -1));
+      temp = temp->pnext;
+    }
+    printf("NULL");
+    printf("\n\n");*/
+
+    printf("Proc %d running: Parent = %d\nEnter a char [s|f|w|q|u] : ", 
+	   running->pid, running->parent->pid);
+    c = getc(); printf("%c\n", c);
+    switch(c){
+       case 's' : tswitch();      break;
+       case 'f' : do_fork();     break;
+       case 'w' : do_wait();      break;
+       case 'q' : do_exit(-1);    break;
+       case 'u' : goUmode();      break;
+    }
+  }
+}
+
 int get_proc(PROC **list){
   return (dequeue(list));
 }
@@ -35,10 +71,22 @@ int copy_image(u16 child_segment){
 }
 int goUmode();
 
-int kexec(char *filename){
+int do_exec(int val){
 
   u16 end, cursor, segment;
   int j;
+  char str[64];
+  char c;
+  int i = 0;
+
+  do{
+    c = get_byte(running->uss, val);
+    str[i] = c;
+    val++;
+    i++;
+  }while(c!='\0');
+
+      
 
     if(!filename){
       printf("No file was given to exec()\n");
@@ -46,7 +94,7 @@ int kexec(char *filename){
     }
 
     // Load the executable image into the running segment
-    load(filename, running->uss);
+    load(str, running->uss);
 
      segment = running->uss;
 
@@ -103,12 +151,10 @@ int kexec(char *filename){
 
 }
 
-int kfork(char *filename)
+int do_fork()
 {
 
             int j;
-
-           
             u16 segment, *cursor, *end;
 
             PROC *p = get_proc(&freeList);  // Set up a new PROC that points to the next free PROC in the list
@@ -194,50 +240,7 @@ int kfork(char *filename)
 
 
            return p->pid;
-
 }
-
-int body()
-{
-  char c;
-  PROC * temp;
-
-  printf("Proc %d resumes to body()\n", running->pid);
-  while(1){
-    
-   
-    printList("\nReadyQueue", readyQueue);
-    printList("FreeList", freeList);
-    printList("SleepList", sleepList);
-    temp = procList;
-   /* printf("AllProcs: ");
-    while(temp){
-      printf("[ %d| %d]->", temp->pid, (temp->parent ? temp->parent->pid : -1));
-      temp = temp->pnext;
-    }
-    printf("NULL");
-    printf("\n\n");*/
-
-    printf("Proc %d running: Parent = %d\nEnter a char [s|f|w|q|u] : ", 
-	   running->pid, running->parent->pid);
-    c = getc(); printf("%c\n", c);
-    switch(c){
-       case 's' : do_tswitch();   break;
-       case 'f' : do_kfork();     break;
-       case 'w' : do_wait();      break;
-       case 'q' : do_exit(-1);    break;
-       case 'u' : goUmode();      break;
-    }
-  }
-}
-
-int do_tswitch(){
-  tswitch();
-};
-int do_kfork(){
-  kfork("/bin/u1");
-};
-
 
 int do_ps(){
     PROC * temp = procList;
@@ -255,6 +258,7 @@ int do_ps(){
     printf("\n\n");
 };
 int chname(int val){
+
   char str[64];
     char c;
     int i = 0;
