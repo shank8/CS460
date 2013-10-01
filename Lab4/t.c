@@ -106,6 +106,14 @@ int init()
 
 int scheduler()
 {
+
+  u16 segment, cursor;
+  int j;
+
+    printList("ReadyQueue - Scheduler", &readyQueue);
+
+     
+
     if (running->status == RUNNING){
      
         running->status = READY;
@@ -113,6 +121,22 @@ int scheduler()
     }
     running = dequeue(&readyQueue);
     running->status = RUNNING;
+
+     segment = running->uss;
+
+      cursor = 0x1000 - 12;
+
+          printf("------------- uSTACK (%d): Scheduler --------------\n", running->pid);
+          printf("| uDS |  uES  | di | si | bp | dx | cx | bx | ax | uPC | uCS  | flag |\n");
+          j=0;
+
+          while(j<12){
+             printf("%x ", get_word(segment, cursor));
+             cursor+=1;
+             j++;
+          }
+          printf("\n\n");
+
 }
 
 int int80h();
@@ -127,11 +151,15 @@ int set_vec(vector, handler) u16 vector, handler;
 main()
 {
     printf("MTX starts in main()\n");
-    
+
+ 
     init();      // initialize and create P0 as running
+    printList("ReadyQueue", &readyQueue);
     set_vec(80, int80h);
     printf("PROC 0: %d\n", running->priority);
+
     kfork("/bin/u1");     // P0 kfork() P1
+  
 
     while(1){
       printf("P0 running\n");
@@ -142,6 +170,7 @@ main()
       }
 
       printf("P0 switch process\n");
+      printList("ReadyQueue", &readyQueue);
       tswitch();   // P0 switch to run P1
    }
 }
