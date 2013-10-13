@@ -18,8 +18,11 @@ int find_cmd(name) char *name;
    char *p = cmd[0];
 
    while (p){
-     if (!strcmp(p, name))
+     printf("%s  %s\n", p, name);
+     if (!strcmp(p, name)){
+        printf("found");
         return i;
+      }
      p = cmd[++i];
    } 
    return(-1);

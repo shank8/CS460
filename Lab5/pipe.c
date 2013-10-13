@@ -126,51 +126,95 @@ int write_pipe(int fd, char *buf, int n)
 {
   // your code for write_pipe()
 }
+PIPE * getPipe(){
+  int i = 0;
+  while(i < NPIPE){
+    if(pipe[i].busy == 0){
+      return &pipe[i];
+    }
+    i++;
+  }
+  printf("No FREE pipes available...Sorry\n");
+  return 0;
+  
+}
+int getOFT(OFTE **read, OFTE **write){
+  int i = 0;
+  int num = 0;
+  while(i < NOFT){
+    if(ofte[i].refCount == 0){
+      switch(num){
+        case 0:
+               *read = &ofte[i];
+               break;
+        case 1:
+              *write = &ofte[i];
+              break;
+        case 2:
+              return 0;
+      }
+      num++;
+    }
+    i++;
 
-int kpipe(int pd[2])
+  }
+
+  return 1;
+}
+int kpipe(int pd)
 {
   // create a pipe; fill pd[0] pd[1] (in USER mode!!!) with descriptors
-  OFTE read, write;
-  PIPE pipe;
-  int i = 0;
+  OFTE * read, * write;
+  PIPE *newpipe;
+  u16 i = 0;
+
+  newpipe = getPipe();
+  if(newpipe == 0){
+    return 0;
+  }
+  getOFT(&read, &write);
+  printf("ref: %d\n", read->refCount);
 
   printf("About to pipe running PROC %d\n", running->pid);
-
   // Get the next open FD spot and fill it with the reader OFTE
   while(running->fd[i] != 0){
     i++;
   }
   running->fd[i] = &read;
-  pd[0] = i;
+  printf("Putting word (%d) into address %x\n", i, pd);
+  put_word(i, running->uss, pd);
 
   // Continue to the next open spot and fill it with the writer OFTE
+  pd+=2;
+
   while(running->fd[i] != 0){
     i++;
   }
   running->fd[i] = &write;
-  pd[1] = i;
+    printf("Putting word (%d) into address %x\n", i, pd);
+  put_word(i, running->uss, pd);
 
   // Set both the reader and writer to the pipe
-  read.pipe_ptr = write.pipe_ptr = &pipe;
+  read->pipe_ptr = write->pipe_ptr = pipe;
 
   // Init the OFTE structs
-  read.mode = READ_PIPE;
-  write.mode = WRITE_PIPE;
+  read->mode = READ_PIPE;
+  write->mode = WRITE_PIPE;
   
-  read.refCount = 1;
-  write.refCount = 1;
+  read->refCount = 1;
+  write->refCount = 1;
 
   // Init our pipe
   for(i=0;i<PIPE_SIZE;i++){
-    pipe.buf[i] = 0;
+    pipe->buf[i] = 0;
   }
-  pipe.head = &pipe.buf[0];
-  pipe.tail = &pipe.buf[PIPE_SIZE-1];
-  pipe.room = PIPE_SIZE;
-  pipe.data = 0;
-  pipe.nreader = 1;
-  pipe.nwriter = 1;
-  pipe.busy = 1;
+  pipe->head = &pipe->buf[0];
+  pipe->tail = &pipe->buf[PIPE_SIZE-1];
+  pipe->room = PIPE_SIZE;
+  pipe->data = 0;
+  pipe->nreader = 1;
+  pipe->nwriter = 1;
+  pipe->busy = 1;
 
 }
 
