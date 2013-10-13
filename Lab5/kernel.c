@@ -16,7 +16,7 @@ int copy_image(u16 child_segment){
   u16 end, offset;
   int word;
 
-  end = 0x1000;
+  end = 32*1024;
   offset = 0;
  
   while(offset < end){
@@ -33,7 +33,7 @@ int copy_image(u16 child_segment){
 }
 int goUmode();
 
-int do_exec(int val){
+int exec(int val){
 
   u16 end, cursor, segment;
   int j;
@@ -70,7 +70,7 @@ int do_exec(int val){
             j=0;
             while(j<=12){
 
-              cursor = 0x1000 - j*2;
+              cursor =  32*1024 - j*2;
            
               switch(j){
                 case 1: // FLAG
@@ -128,6 +128,21 @@ PROC * kfork(char * file){
       p->priority = 1;
       p->next = 0;
 
+      //Copy all file descriptors from parent
+      /*for(j=0;j<NFD;j++){
+        p->fd[j] = running->fd[j];
+        if(p->fd[j] != 0){
+          p->fd[j]->refCount++;
+          if(p->fd[j]->mode == READ_PIPE){
+            p->fd[j]->pipe_ptr->nreader++;
+          }
+          if(p->fd[j]->mode == WRITE_PIPE){
+            p->fd[j]->pipe_ptr->nwriter++;
+          }
+        }
+        
+      }*/
+      
       //clear all saved registers on stack
       for(j=1; j<10; j++){
           p->kstack[SSIZE-j] = 0;
@@ -151,7 +166,7 @@ PROC * kfork(char * file){
           j=0;
           printf("Setting up the stack...\n");
             while(j<=12){
-              cursor = 0x1000 - j*2;
+              cursor = 32*1024 - j*2;
            
               switch(j){
                 case 1: // FLAG
@@ -192,7 +207,7 @@ PROC * kfork(char * file){
      return p;
 }
 
-int do_fork()
+int fork()
 {
          /* This do_fork() function is called only when fork is called from kmode */
 
@@ -217,7 +232,7 @@ int do_fork()
            
              j=0;
             while(j<=12){
-              cursor = 0x1000 - j*2;
+              cursor = 32*1024 - j*2;
            
               switch(j){
                 case 1: // FLAG

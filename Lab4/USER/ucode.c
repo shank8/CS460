@@ -1,6 +1,6 @@
 // ucode.c file
 
-char *cmd[]={"getpid", "ps", "chname", "kmode", "switch", "wait", "exit", 0};
+char *cmd[]={"getpid", "ps", "chname", "kmode", "switch", "wait", "fork", "exec", "exit", 0};
 
 int show_menu()
 {

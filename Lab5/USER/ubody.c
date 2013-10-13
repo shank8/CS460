@@ -16,7 +16,12 @@
            case 5 : wait();     break;
            case 6 : fork();     break;
            case 7 : exec();     break;
-          case 8 : exit();     break;
+           case 8 : exit();      break;
+           case 9 : pipe();    break;
+           case 10: pfd();       break;
+           case 11: close();     break;
+           case 12 : read_pipe(); break;
+           case 13 : write_pipe();break;
 
            default: invalid(name); break;
        } 

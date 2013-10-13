@@ -36,8 +36,10 @@ typedef struct proc{
     int    kstack[SSIZE];      // per proc stack area
 }PROC;
 *******************************/
+PIPE pipe[NPIPE];
+OFTE ofte[NOFT];
 
-PROC proc[NPROC], *running, *freeList, *readyQueue, *sleepList, *procList;
+PROC proc[NPROC], MainProc, *running, *freeList, *readyQueue, *sleepList, *procList;
 int procSize = sizeof(PROC);
 int nproc = 0;
 
@@ -55,6 +57,7 @@ char *pname[]={"Sun", "Mercury", "Venus", "Earth",  "Mars", "Jupiter",
 #include "int.c"
 #include "wait.c"
 #include "kernel.c"
+#include "pipe.c"
 
 
 /*PROC * dequeue(PROC **queue) {
@@ -76,7 +79,7 @@ char *pname[]={"Sun", "Mercury", "Venus", "Earth",  "Mars", "Jupiter",
 
 int init()
 {
-    PROC *p; int i;
+    PROC *p; int i, j;
     printf("init ....");
     for (i=0; i<NPROC; i++){   // initialize all procs
         p = &proc[i];
@@ -84,6 +87,10 @@ int init()
         p->status = FREE;
         p->priority = 0;  
         p->parent = 0;
+        for(j=0;j<NFD;j++){
+           p->fd[j] = 0;
+        }
+       
         strcpy(proc[i].name, pname[i]);
    
         p->pnext = p->next = &proc[i+1];

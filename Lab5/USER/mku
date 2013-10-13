@@ -23,4 +23,4 @@ sudo cp $2 /mnt/bin/$2
 sudo umount /mnt
 
 sudo rm *.o $1 $2
-echo done $1 $2
+echo done $1 $2s
