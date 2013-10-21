@@ -10,6 +10,8 @@ typedef unsigned long  u32;
 #define NFD 10
 #define NOFT 20
 
+#define BROKEN_PIPE_ERROR 11
+
 // OFTE Modes
 #define READ 0
 #define WRITE 1

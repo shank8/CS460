@@ -6,7 +6,7 @@ main()
 
   while(1){
     pid = getpid();
-    color = 0x000A + (pid % 6);
+    color = 0x000B + (pid % 6);
        
     printf("----------------------------------------------\n");
     printf("I am proc %d in U mode: running segment=%x\n",getpid(), getcs());

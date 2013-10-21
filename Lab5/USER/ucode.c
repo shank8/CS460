@@ -18,9 +18,9 @@ int find_cmd(name) char *name;
    char *p = cmd[0];
 
    while (p){
-     printf("%s  %s\n", p, name);
+ 
      if (!strcmp(p, name)){
-        printf("found");
+   
         return i;
       }
      p = cmd[++i];
@@ -128,14 +128,20 @@ int read_pipe()
    int fd;
    int n;
   int nbytes;
+  char byteString[32];
   char data[1024];
 
   pfd();
   printf("What fd would you like to read from? ");
   fd = (getc()&0x7F) - '0';
+  putc(fd+'0');
+  getc();
+  printf("\n");
 
   printf("How many bytes should be read? ");
-  nbytes = (getc()&0x7F) - '0';
+  gets(byteString);
+  nbytes = atoi(byteString);
+  printf("\n");
 
   n = syscall(31, fd, data, nbytes);
 
@@ -157,7 +163,10 @@ int write_pipe()
     pfd();
     printf("What fd would you like to write to? ");
     fd = (getc()&0x7F) - '0';
-
+    putc(fd+'0');
+    getc();
+    printf("\n");
+    
     printf("Enter a string to write: ");
     gets(data);
 
@@ -178,8 +187,11 @@ int close_pipe()
 {
   int fd;
 
+  pfd();
   printf("What fd would you like to close? ");
   fd = (getc()&0x7F) - '0';
+  printf("%d", fd);
+  getc();
 
   syscall(33, fd, 0);
 }

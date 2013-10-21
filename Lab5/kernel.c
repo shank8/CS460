@@ -129,7 +129,7 @@ PROC * kfork(char * file){
       p->next = 0;
 
       //Copy all file descriptors from parent
-      /*for(j=0;j<NFD;j++){
+      for(j=0;j<NFD;j++){
         p->fd[j] = running->fd[j];
         if(p->fd[j] != 0){
           p->fd[j]->refCount++;
@@ -141,7 +141,7 @@ PROC * kfork(char * file){
           }
         }
         
-      }*/
+      }
       
       //clear all saved registers on stack
       for(j=1; j<10; j++){

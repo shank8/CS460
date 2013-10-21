@@ -1,0 +1,12 @@
+bcc -c t.c
+as86 -o ts.o ts.s
+ld86 -d ts.o t.o mtxlib /usr/lib/bcc/libc.a
+
+sudo mount -o loop mtximage /mnt
+sudo cp a.out /mnt/boot/mtx
+sudo umount /mnt
+
+(cd USER; ./mku u1; ./mku u2)
+
+rm *.o a.out
+echo done mtx
