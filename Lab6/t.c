@@ -80,7 +80,6 @@ int initialize()
   printf("MTX initializing ....\n");
    
    hr = min = sec = 0;
-   out_byte(0x3F2, 0x1C);
   for (i=0; i < NPROC; i++){
       proc[i].pid = i; 
       proc[i].status = FREE;
@@ -193,15 +192,17 @@ int scheduler()
       enqueue(running);
 
   for (i=NQUEUE-1; i>=0; i--){
+
        running = dequeue(&rqueue[i].queue);
-         running->time = 5;
+       color = (running->pid+1)+0x09;
+         running->time = 10;
        if (running)
           break;
   }
 
  
-  color = 0x09 + running->pid;
-  printf("next running=%d  time : %d", running->pid, running->time);
+  
+  printf("next running=%d  time : %d\n", running->pid, running->time);
 }
 
 

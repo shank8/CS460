@@ -1,6 +1,6 @@
 #include "uio.c"
 #include "ucode.c"
-
+int color;
 main()
 { 
   char name[64]; int pid, cmd;
@@ -11,9 +11,8 @@ main()
        printf("I am proc %din U mode: running at segment=%x\n",
                 getpid(), getcs());
 
-       
        show_menu();
-       printf("Command ? ");
+       printf("Command ? \n");
        gets(name); 
        if (name[0]==0) 
            continue;

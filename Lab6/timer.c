@@ -61,21 +61,22 @@ int thandler()
         // 1) Display Time
         print_clock();
 
-        // 2) Change IFF Umode every 5 seconds
-        // if(inkmode == 1){
-        //   // WE ARE IN UMODE
-        //   printf("time: %d\n", running->time);
-        //   running->time--;
-        //   if(running->time == 0){
-        //      out_byte(0x20, 0x20);  
-        //      tswitch();
-        //   }
-        // }
+        //2) Change IFF Umode every 5 seconds
+        if(inkmode == 1){
+          // WE ARE IN UMODE
+         
+          running->time--;
+           printf("Switching in %d...\n", running->time);
+          if(running->time == 0){
+             out_byte(0x20, 0x20);  
+             tswitch();
+          }
+        }
 
        // 3) Turn ON/OFF Floppy Disk port
         if(seconds % 5 == 0){
          
-
+          printf("Switching FD...");
           if(in_byte(0x3F2) == 0x0C){ 
 
             out_byte(0x3F2, 0x1C);
@@ -83,8 +84,8 @@ int thandler()
           }else if(in_byte(0x3F2)  == 0x1C){
              out_byte(0x3F2, 0x0C);
           }else if(in_byte(0x3F2) == 0x2C){
-             printf("fd = %x\n", in_byte(0x3F2));
-             out_byte(0x3F2, 0x1C);
+            // printf("fd = %x\n", in_byte(0x3F2));
+             //out_byte(0x3F2, 0x1C);
           }
         }
 
@@ -109,7 +110,10 @@ int thandler()
 }
 
 int tsleep(timer) int timer; {
-
+    if(running->pid <= 1){
+      printf("Cannot sleep PROC 1\n");
+      return -1;
+    }
     running->time = timer;
     printf("tsleep for %d seconds\n", timer);
     sleep(running+1); // Sleep on some unique value

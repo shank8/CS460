@@ -106,7 +106,7 @@ USP =  6
           mov  es,di            ! CS=DS=SS=ES in Kmode
           mov  ss,di
 
-          mov  sp, _running     ! sp -> running's kstack[] high end
+          mov  sp, _running     ! sp -> runnings kstack[] high end
           add  sp, _procsize
 
 ?1:       call  _?1             ! call handler in C
