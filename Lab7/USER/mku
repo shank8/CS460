@@ -1,0 +1,16 @@
+#VFD=/root/vmware/Other/fd
+#VFD=/root/dosemu/mtximage
+VFD=../mtximage
+
+echo ------------------------ make $1 --------------------------
+bcc -c -ansi $1.c
+as86 -o u.o u.s
+ld86 -o $1 u.o $1.o ../mtxlib /usr/lib/bcc/libc.a
+
+sudo mount -o loop $VFD /mnt
+sudo cp $1 /mnt/bin
+sudo ls /mnt/bin
+sudo umount /mnt
+
+rm *.o $1
+

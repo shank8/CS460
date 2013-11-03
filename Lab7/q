@@ -1,0 +1,4 @@
+qemu -fda mtximage -no-fd-bootchk -serial mon:/dev/pts/2 -serial mon:/dev/pts/3
+
+
+
