@@ -207,6 +207,11 @@ disable_tx(struct stty *t)
 int secho(struct stty *tty, int c)
 {
    /* insert c into ebuf[]; turn on tx interrupt */
+   lock();
+   tty->ebuf[ehead++] = c;
+   ehead %= EBUFLEN;
+   enable_tx(tty);
+   unlock();
 }
 
 int do_rx(struct stty *tty)   /* interrupts already disabled */
@@ -237,18 +242,31 @@ int sgetc(struct stty *tty)
 { 
   int c;
   P(&tty->inchars);   /* wait if no input char yet */
+ lock();
+  // WRITE CODE TO get a char c from tty->inbuf[]
+  c = tty->inbuf[intail++];
 
-  // WRITE CODE TO get a char c from tty->inbuf[ ]
+  intail %= INBUFLEN;
 
+ unlock();
   return(c);
 }
 
 int sgetline(int port, char *line)
 {  
    struct stty *tty = &stty[port];
+ 
+   char c;
+   int i = 0;
    printf("sgetline from port %d\n", port);
 
    // WRITE CODE to get a line from serial port
+
+   do{
+      c = sgetc(tty);
+      line[i] = c;
+
+   }while(line[i++] != '\0');
 
    return strlen(line);
 }
@@ -259,6 +277,7 @@ int do_tx(struct stty *tty)
 {
   int c;
   printf("tx interrupt ");
+
 
   /************** WRITE CODE TO DO THESE *********************
   (1). if (nothing to output){ 
@@ -283,6 +302,9 @@ int sputc(struct stty *tty, int c)
 
     lock();             
     //  WRITE CODE to enter c into outbuf[ ];
+    tty->outbuf[outhead++] = (char)c;
+    outhead %= OUTBUFLEN;
+
     unlock();
 
     if (!tty->tx_on) 
@@ -294,6 +316,12 @@ int sputline(int port, char *line)
 {
   struct stty *tty = &stty[port];
   //WRITE CODE to output line to serial port
+  int i = 0;
+
+  do{
+    sputc(tty, line[i]);
+  }while(line[i++] != '\0');
+
 }
 
 
@@ -303,6 +331,20 @@ char outline[64];
 int sout(int port, char *z)
 {
    // WRITE CODE to get a line from Umode and print it to serial port
+   
+    int i = 0;
+    ushort c;
+
+    // First get line from Umode
+    do{
+      c = get_byte(running->uss, z);
+      outline[i] = c;
+      z++;
+      i++;
+    }while(c != '\0');
+
+    sputline(port, outline);
+
    return 0;
 }
 
@@ -311,5 +353,16 @@ int sin(int port, char *z)
 {
   // WRITE CODE to get a line from serial port and copy it to Umode
   //  return length_of_line;
+  int len;
+  int i = 0;
+  
+  len = sgetline(port, inline);
+  printf("Got %d chars from serial port %d\n", len, port);
+  
+  do{
+    put_byte(inline[i++], running->uss, z++);
+  }while(inline[i] != '\0');
+
+  return len;
 }
 

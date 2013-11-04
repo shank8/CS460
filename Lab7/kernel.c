@@ -212,7 +212,7 @@ int fork()
               printf("Got a new proc.. PROC %d\n", p->pid);
 
 
-              segment = (p->pid + 1)*32*1024;
+              segment = (p->pid + 1)*0x1000;
               
               p->uss = segment;
               copy_image(segment);
