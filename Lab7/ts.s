@@ -18,6 +18,7 @@
 !.globl _tinth, _thandler
 .globl _s0inth, _s0handler
 .globl _s1inth, _s1handler
+!.globl _kbinth, _kbhandler
 
 .text                                                ! these tell as:	
 begtext:                                             ! text,data,bss segments
@@ -126,6 +127,7 @@ _int80h: INTH kcinth
 
 !_tinth:  INTH thandler
 !_kbinth: INTH kbhandler
+
 
 _s0inth: INTH s0handler
 _s1inth: INTH s1handler

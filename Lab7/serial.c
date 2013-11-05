@@ -30,7 +30,7 @@ struct stty {
 
    /* output buffer */
    char outbuf[OUTBUFLEN];
-   int outhead, outtail;
+   int outhead, outtail, o_count;
   struct semaphore outroom;
 
    int tx_on;
@@ -96,7 +96,7 @@ int sinit()
 
       t->inhead = t->intail = 0;
       t->ehead =  t->etail = t->e_count = 0;
-      t->outhead =t->outtail = 0;
+      t->outhead =t->outtail = t->o_count= 0;
 
       t->tx_on = 0;
 
@@ -174,7 +174,11 @@ int shandler(int port)
       case 2 : do_tx(t);      break;   /* 010 = tx interrupt */
       case 0 : do_modem(t);   break;   /* 000 = modem interrupt */
    }
+   // printf("re-enable controller->");
+
    out_byte(0x20, 0x20);     /* reenable the 8259 controller */ 
+   // printf("INTERRUPT DONE\n\n");
+   // getc();
 }
 
 int do_errors()
@@ -189,15 +193,20 @@ int do_modem()
 enable_tx(struct stty *t)
 {
   lock();
+  // printf("start enable->");
   out_byte(t->port+IER, 0x03);   /* 0011 ==> both tx and rx on */
+  // printf("done enable->");
   t->tx_on = 1;
   unlock();
+
 }
 
 disable_tx(struct stty *t)
 { 
   lock();
+  // printf("start disable->");
   out_byte(t->port+IER, 0x01);   /* 0001 ==> tx off, rx on */
+  // printf("done disable->");
   t->tx_on = 0;
   unlock();
 }
@@ -207,11 +216,16 @@ disable_tx(struct stty *t)
 int secho(struct stty *tty, int c)
 {
    /* insert c into ebuf[]; turn on tx interrupt */
+  // printf("start secho->");
    lock();
-   tty->ebuf[ehead++] = c;
-   ehead %= EBUFLEN;
-   enable_tx(tty);
+   tty->ebuf[tty->ehead++] = c;
+   tty->e_count++;
+   tty->ehead %= EBUFLEN;
    unlock();
+   
+   enable_tx(tty);
+
+   // printf("done secho->");
 }
 
 int do_rx(struct stty *tty)   /* interrupts already disabled */
@@ -225,14 +239,28 @@ int do_rx(struct stty *tty)   /* interrupts already disabled */
    put char into stty[port]'s inbuf[ ]
   *************************************/
 
+   // LOCK MAY NOT GO HERE!
+   lock();
+   tty->inbuf[tty->inhead++] = (char)c;
+   tty->inhead %= INBUFLEN;
   /****** This code segment uses bput() to echo each input char ************
    It is for YOUR initial testing only. In YOUR serial port driver, MUST use
    the echo buffer to echo inputs.
-
+  
    bputc(tty->port, c);
    if (c=='\r')
       bputc(tty->port, '\n');
   ************************************************************************/
+    unlock();
+
+    // printf("secho->");
+    secho(tty, c);
+  /*bputc(tty->port, c);
+  if(c=='\n'){
+    bputc(tty->port, '\r');
+  }*/
+
+ 
   
   V(&tty->inchars);     /* unblock any process waiting in sgetc() */
 }      
@@ -244,9 +272,9 @@ int sgetc(struct stty *tty)
   P(&tty->inchars);   /* wait if no input char yet */
  lock();
   // WRITE CODE TO get a char c from tty->inbuf[]
-  c = tty->inbuf[intail++];
+  c = tty->inbuf[tty->intail++];
 
-  intail %= INBUFLEN;
+  tty->intail %= INBUFLEN;
 
  unlock();
   return(c);
@@ -278,6 +306,39 @@ int do_tx(struct stty *tty)
   int c;
   printf("tx interrupt ");
 
+  if(tty->e_count == 0 && tty->o_count == 0)
+  {
+    // printf("1");
+
+    disable_tx(tty);
+
+    return;
+  }
+
+  if(tty->e_count != 0){
+    // printf("2");
+    lock();
+    c = tty->ebuf[tty->etail++];
+    tty->etail %= EBUFLEN;
+    tty->e_count--;
+    
+    bputc(tty->port, (char)c);
+    unlock();
+    return;
+  }
+
+  if(tty->o_count != 0){
+    // printf("3");
+    lock();
+    c = tty->outbuf[tty->outtail++];
+    tty->outtail %= OUTBUFLEN;
+    tty->o_count--;
+    
+    bputc(tty->port, (char)c);
+    unlock();
+    V(&tty->outroom);
+    return;
+  }
 
   /************** WRITE CODE TO DO THESE *********************
   (1). if (nothing to output){ 
@@ -298,17 +359,26 @@ int do_tx(struct stty *tty)
 
 int sputc(struct stty *tty, int c)
 {
+    // printf("sputc->");
+   
+
     P(&tty->outroom);   
 
-    lock();             
+    lock();
     //  WRITE CODE to enter c into outbuf[ ];
-    tty->outbuf[outhead++] = (char)c;
-    outhead %= OUTBUFLEN;
-
+    tty->outbuf[tty->outhead++] = (char)c;
+    tty->outhead %= OUTBUFLEN;
+    tty->o_count++;
     unlock();
 
-    if (!tty->tx_on) 
+    // printf("unlock->");
+  
+    if (!tty->tx_on) {
+       // printf("enable tx->");
        enable_tx(tty);
+       // printf("done enable tx->");
+       // getc();
+     }
     return(1);
 }
 
@@ -317,9 +387,14 @@ int sputline(int port, char *line)
   struct stty *tty = &stty[port];
   //WRITE CODE to output line to serial port
   int i = 0;
+ // printf("sputline->");
 
   do{
+    // printf("before putc->");
+ 
     sputc(tty, line[i]);
+     // printf("after putc->");
+    getc();
   }while(line[i++] != '\0');
 
 }
@@ -335,6 +410,9 @@ int sout(int port, char *z)
     int i = 0;
     ushort c;
 
+    printf("sout(%d)->", port);
+    
+
     // First get line from Umode
     do{
       c = get_byte(running->uss, z);
@@ -342,7 +420,8 @@ int sout(int port, char *z)
       z++;
       i++;
     }while(c != '\0');
-
+    // printf("oh->");
+   
     sputline(port, outline);
 
    return 0;
@@ -355,7 +434,7 @@ int sin(int port, char *z)
   //  return length_of_line;
   int len;
   int i = 0;
-  
+  printf("sin port %d\n", port);
   len = sgetline(port, inline);
   printf("Got %d chars from serial port %d\n", len, port);
   

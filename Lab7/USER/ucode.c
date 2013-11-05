@@ -78,9 +78,10 @@ int myexec(char *file)
 
 int sout()
 {
-  int port;
+  char port;
   printf("input port number:[0|1]");
   port = getc()&0x7F - '0';
+  putc(port+'0'); getc();
   int80(9, port, "serial line from Umode\n");
 }
 

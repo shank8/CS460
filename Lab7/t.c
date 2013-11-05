@@ -15,6 +15,7 @@ int body();
 #include "kernel.c"
 #include "int.c"
 #include "pv.c"
+
 #include "serial.c"
 
 
@@ -77,6 +78,7 @@ int body()
 
 
 int int80h();
+//int kbinth();
 int s0inth();
  int s1inth(); // for serial port 1
 
@@ -92,28 +94,38 @@ int set_vec(vector, addr) ushort vector, addr;
 main()
 {
     int pid;
+    ushort haha;
+    char h;
+
+
     resetVideo();
+   
     printf("\nWelcome to the 460 Multitasking System\n");
     printf("initializing ......\n");
         init();
     printf("initialization complete\n");
 
+   
     set_vec(80, int80h);
+
+    //set_vec(9, kbinth); 
+    //kbinit();
 
     kfork("/bin/u1");
 
     set_vec(12, s0inth);
     set_vec(11, s1inth); // for second serial port at 0x2F8
     sinit();
-
+   
   printQueue(readyQueue);
 
     while(1){
 
        if (readyQueue){
           tswitch();
+
        }else{
-        printf("ohh nooo");
+        //printf("ohh nooo");
        }
     }
     printf("all dead, happy ending\n");
