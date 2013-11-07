@@ -149,6 +149,7 @@ int sinit()
 //======================== LOWER HALF ROUTINES ===============================
 int s0handler()
 {
+//  printf("s0handler");
   shandler(0);
 }
 int s1handler()
@@ -163,6 +164,7 @@ int shandler(int port)
 
    t = &stty[port];            /* IRQ 4 interrupt : COM1 = stty[0] */
 
+ //  printf("shandler");
    IntID     = in_byte(t->port+IIR);       /* read InterruptID Reg */
    LineStatus= in_byte(t->port+LSR);       /* read LineStatus  Reg */    
    ModemStatus=in_byte(t->port+MSR);       /* read ModemStatus Reg */
@@ -175,6 +177,8 @@ int shandler(int port)
       case 0 : do_modem(t);   break;   /* 000 = modem interrupt */
    }
    // printf("re-enable controller->");
+
+    
 
    out_byte(0x20, 0x20);     /* reenable the 8259 controller */ 
    // printf("INTERRUPT DONE\n\n");
@@ -198,7 +202,6 @@ enable_tx(struct stty *t)
   // printf("done enable->");
   t->tx_on = 1;
   unlock();
-
 }
 
 disable_tx(struct stty *t)
@@ -217,20 +220,21 @@ int secho(struct stty *tty, int c)
 {
    /* insert c into ebuf[]; turn on tx interrupt */
   // printf("start secho->");
-   lock();
+  // lock();
    tty->ebuf[tty->ehead++] = c;
    tty->e_count++;
    tty->ehead %= EBUFLEN;
-   unlock();
+   
    
    enable_tx(tty);
-
+  // unlock();
    // printf("done secho->");
 }
 
 int do_rx(struct stty *tty)   /* interrupts already disabled */
 { 
   int c;
+
   c = in_byte(tty->port) & 0x7F;  /* read the ASCII char from port */
 
   printf("port %x interrupt : c=%c\n", tty->port, c);
@@ -240,7 +244,7 @@ int do_rx(struct stty *tty)   /* interrupts already disabled */
   *************************************/
 
    // LOCK MAY NOT GO HERE!
-   lock();
+  // lock();
    tty->inbuf[tty->inhead++] = (char)c;
    tty->inhead %= INBUFLEN;
   /****** This code segment uses bput() to echo each input char ************
@@ -251,7 +255,8 @@ int do_rx(struct stty *tty)   /* interrupts already disabled */
    if (c=='\r')
       bputc(tty->port, '\n');
   ************************************************************************/
-    unlock();
+   // unlock();
+
 
     // printf("secho->");
     secho(tty, c);
@@ -261,7 +266,8 @@ int do_rx(struct stty *tty)   /* interrupts already disabled */
   }*/
 
  
-  
+   
+
   V(&tty->inchars);     /* unblock any process waiting in sgetc() */
 }      
 
@@ -317,25 +323,25 @@ int do_tx(struct stty *tty)
 
   if(tty->e_count != 0){
     // printf("2");
-    lock();
+   //lock();
     c = tty->ebuf[tty->etail++];
     tty->etail %= EBUFLEN;
     tty->e_count--;
     
     bputc(tty->port, (char)c);
-    unlock();
+    //unlock();
     return;
   }
 
   if(tty->o_count != 0){
     // printf("3");
-    lock();
+    //lock();
     c = tty->outbuf[tty->outtail++];
     tty->outtail %= OUTBUFLEN;
     tty->o_count--;
     
     bputc(tty->port, (char)c);
-    unlock();
+    //unlock();
     V(&tty->outroom);
     return;
   }
@@ -394,7 +400,7 @@ int sputline(int port, char *line)
  
     sputc(tty, line[i]);
      // printf("after putc->");
-    getc();
+ 
   }while(line[i++] != '\0');
 
 }

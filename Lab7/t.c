@@ -80,7 +80,7 @@ int body()
 int int80h();
 //int kbinth();
 int s0inth();
- int s1inth(); // for serial port 1
+// int s1inth(); // for serial port 1
 
 int set_vec(vector, addr) ushort vector, addr;
 {
@@ -114,7 +114,7 @@ main()
     kfork("/bin/u1");
 
     set_vec(12, s0inth);
-    set_vec(11, s1inth); // for second serial port at 0x2F8
+   // set_vec(11, s1inth); // for second serial port at 0x2F8
     sinit();
    
   printQueue(readyQueue);

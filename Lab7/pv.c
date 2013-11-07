@@ -8,6 +8,7 @@ int P(s) struct semaphore *s;
   int sr = int_off();
    s->value--;
    if (s->value < 0){
+    printf("BLOCK");
       running->status=BLOCK;
       enqueue(running, &s->queue);
       tswitch();
@@ -22,6 +23,7 @@ int V(s) struct semaphore *s;
     int sr = int_off();
     s->value++;
     if (s->value <= 0){
+      printf("DEQUEUE");
         p = dequeue(&s->queue);
         p->status = READY;
         enqueue(p, &readyQueue);
